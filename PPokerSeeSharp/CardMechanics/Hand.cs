@@ -203,7 +203,14 @@ namespace PPoker.CardMechanics {
                     if (!_cards[0].isSameValueAs(_cards[1]))
                         swapCards(0, 4);
                     break;
-
+                case 5:
+                case 9:
+                    string substr = _cards[0].getValue() + _cards[1].getValue() + _cards[2].getValue() + _cards[3].getValue() + _cards[4].getValue();
+                    if ("Ace5432".Equals(substr)) {
+                        _cards.Add(_cards[0]);
+                        _cards.RemoveAt(0);
+                    }
+                    break;
                 default:
                     break;
             }
