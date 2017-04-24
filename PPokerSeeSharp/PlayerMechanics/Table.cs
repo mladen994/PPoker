@@ -101,6 +101,7 @@ namespace PPoker.PlayerMechanics {
                 player.bagBackup = 0;
             }
         }
+        //test
         private void drawPhase() {
             for (int i = 0; i < players.Count; ++i) {
                 int curIndex = (dealerCounter + i) % players.Count;
