@@ -195,7 +195,7 @@ namespace PPoker.CardMechanics {
                         swapCards(1, 3);
                     }
                     break;
-                case 4:
+                case 4://TODO: REWORK
                 case 7:
                     swapCards(0, 2);
                     break;
@@ -206,10 +206,8 @@ namespace PPoker.CardMechanics {
                 case 5:
                 case 9:
                     string substr = _cards[0].getValue() + _cards[1].getValue() + _cards[2].getValue() + _cards[3].getValue() + _cards[4].getValue();
-                    if ("Ace5432".Equals(substr)) {
-                        _cards.Add(_cards[0]);
-                        _cards.RemoveAt(0);
-                    }
+                    if ("Ace5432".Equals(substr))
+                        swapCards(0, 4);
                     break;
                 default:
                     break;

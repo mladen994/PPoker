@@ -26,7 +26,6 @@ namespace PPoker.PlayerMechanics {
             _hand = new Hand(deck);
         }
         public int placeAnte(int ante) {
-            bagBackup = 0;
             if (ballance < ante) {
                 int tmpB = ballance;
                 ballance = 0;
@@ -79,11 +78,10 @@ namespace PPoker.PlayerMechanics {
             return PlayerAction.CALL;
         }
         private PlayerAction raiseAction(int currentRaise) {
-            int call = currentRaise;
             bagBackup += currentRaise;
-            ballance -= call;
-            bag += call;
-            System.Console.WriteLine("How much do you want to raise? You have called for: " + call + " and you have " + ballance + " čuna left");
+            ballance -= currentRaise;
+            bag += currentRaise;
+            System.Console.WriteLine("How much do you want to raise? You have called for: " + currentRaise + " and you have " + ballance + " čuna left");
             int raise;
             while (!Int32.TryParse(System.Console.ReadLine(), out raise) && raise < ballance) {
                 System.Console.WriteLine("Invalid number");
@@ -103,5 +101,8 @@ namespace PPoker.PlayerMechanics {
             didFold = true;
             return PlayerAction.FOLD;
         }
+
+        ///TODO:
+        ///when player 1 goes all in 800$ and player 2 goes all in 300$, if player2 wins, he should not take all money!
     }
 }

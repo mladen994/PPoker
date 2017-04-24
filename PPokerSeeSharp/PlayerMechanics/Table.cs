@@ -96,6 +96,7 @@ namespace PPoker.PlayerMechanics {
             foreach (var player in players) {
                 player.didFold = false;
                 player.didAllIn = false;
+                player.bagBackup = 0;
             }
         }
         private void drawPhase() {
@@ -144,9 +145,11 @@ namespace PPoker.PlayerMechanics {
             return true;
         }
         private void exchangePhase() {
-            foreach (Player player in players) {
-                player._hand.printHand();
-                Console.WriteLine(player.nickname + ", do you wish to exchange a card? Y/N");
+            for (int i = 0; i < players.Count; ++i) {
+                int j = (i + dealerCounter) % players.Count;
+
+                players[j]._hand.printHand();
+                Console.WriteLine(players[j].nickname + ", do you wish to exchange a card? Y/N");
                 var checker = System.Console.ReadLine().ToUpper();
                 while (!checker.Equals("Y") && !checker.Equals("N")) {
                     Console.WriteLine("Invalid Input, please try again.");
@@ -155,8 +158,8 @@ namespace PPoker.PlayerMechanics {
                 if (checker.Equals("Y")) {
                     System.Console.WriteLine("How many?");
                     int numOfCards = Int32.Parse(System.Console.ReadLine());
-                    player._hand.exchangeCards(numOfCards);
-                    player._hand.printHand();
+                    players[j]._hand.exchangeCards(numOfCards);
+                    players[j]._hand.printHand();
                 }
             }
         }
@@ -197,15 +200,11 @@ namespace PPoker.PlayerMechanics {
         }
         private void showdownPhase() {
             foreach (Player x in players) {
-                if (!x.didFold) {
-                    foreach (Player y in players) {
-                        if (!y.didFold) {
-                            ComparisonResult obracun = x._hand.compareHands(y._hand);
-                            if (obracun == ComparisonResult.WIN)
-                                y.didFold = true;
-                            if (obracun == ComparisonResult.LOSE)
-                                x.didFold = true;
-                        }
+                foreach (Player y in players) {
+                    if (y != x && !y.didFold && !x.didFold) {
+                        ComparisonResult obracun = x._hand.compareHands(y._hand);
+                        y.didFold = obracun == ComparisonResult.WIN;
+                        x.didFold = obracun == ComparisonResult.LOSE;
                     }
                 }
             }
@@ -217,6 +216,15 @@ namespace PPoker.PlayerMechanics {
                     winners.Add(player);
             }
             if (winners.Count() == 1) {
+                if (winners[0].didAllIn) {
+                    foreach (Player player in players) {
+                        if (player != winners[0] && player.bagBackup > winners[0].bagBackup) {
+                            int difference = player.bagBackup - winners[0].bagBackup;
+                            _pot -= difference;
+                            player.ballance += difference;
+                        }
+                    }
+                }
                 Console.Write("\"" + winners[0].nickname + "\" Has won this round and now has a ballance of: " + winners[0].ballance);
                 winners[0].ballance += _pot;
                 Console.WriteLine("+" + _pot + "=" + winners[0].ballance);
