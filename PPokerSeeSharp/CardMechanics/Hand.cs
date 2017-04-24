@@ -195,9 +195,19 @@ namespace PPoker.CardMechanics {
                         swapCards(1, 3);
                     }
                     break;
-                case 4://TODO: REWORK
+                case 4:
+                    if (!_cards[0].isSameValueAs(_cards[1])) {
+                        swapCards(0, 3);
+                        if (!_cards[1].isSameValueAs(_cards[2])) {
+                            swapCards(1, 4);
+                        }
+                    }
+                    break;
                 case 7:
-                    swapCards(0, 2);
+                    if (!_cards[0].isSameValueAs(_cards[2])) {
+                        swapCards(0, 3);
+                        swapCards(1, 4);
+                    }
                     break;
                 case 8:
                     if (!_cards[0].isSameValueAs(_cards[1]))

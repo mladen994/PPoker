@@ -25,13 +25,15 @@ namespace PPoker.PlayerMechanics {
         public void dealCards(Deck deck) {
             _hand = new Hand(deck);
         }
-        public int placeAnte(int ante) {
+        public int placeAnte(int ante) {            
             if (ballance < ante) {
                 int tmpB = ballance;
+                bagBackup = tmpB;
                 ballance = 0;
                 return tmpB;
             } else {
                 ballance -= ante;
+                bagBackup = ante;
                 return ante;
             }
         }

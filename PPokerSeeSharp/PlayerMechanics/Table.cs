@@ -19,6 +19,7 @@ namespace PPoker.PlayerMechanics {
         private int _anteIncrement;
         public string roomName;
         public Deck deck;
+        private Dictionary<List<Player>, int> sidePots;
 
         public Table(Deck deck,
                     string roomName,
@@ -73,10 +74,11 @@ namespace PPoker.PlayerMechanics {
                 drawPhase();
                 if (firstBetPhase()) {
                     exchangePhase();
-                    if (secondBetPhase())
+                    if (secondBetPhase()) {
+                        preShowdownPhase();
                         showdownPhase();
+                    }
                 }
-                collectPhase();
                 kickPhase();
             }
             Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -85,7 +87,7 @@ namespace PPoker.PlayerMechanics {
         }
         private void resetRoundPhase() {
             ++_round;
-            //_pot = 0;
+            _pot = 0;
             dealerCounter = ++dealerCounter % players.Count;
             if (dealerCounter == 0) {
                 ++_cycle;
@@ -126,6 +128,7 @@ namespace PPoker.PlayerMechanics {
                     }
                     Console.WriteLine("---------------------------------");
                     Console.Write(players[playerIndex].nickname + " ");
+                    players[playerIndex]._hand.printHand();
                     PlayerAction action = players[playerIndex].betAction(currentRaise - players[playerIndex].bag);
                     if (action == PlayerAction.RAISE || (action == PlayerAction.ALL_IN && players[playerIndex].bag > currentRaise)) {
                         currentRaise = players[playerIndex].bag;
@@ -198,51 +201,119 @@ namespace PPoker.PlayerMechanics {
             dumpBagsToPot();
             return true;
         }
-        private void showdownPhase() {
-            foreach (Player x in players) {
-                foreach (Player y in players) {
-                    if (y != x && !y.didFold && !x.didFold) {
-                        ComparisonResult obracun = x._hand.compareHands(y._hand);
-                        y.didFold = obracun == ComparisonResult.WIN;
-                        x.didFold = obracun == ComparisonResult.LOSE;
+        private void preShowdownPhase() {
+            sidePots = new Dictionary<List<Player>, int>();
+            var playersByBet = new List<Player>();
+            playersByBet = players.Where(plr => !plr.didFold).ToList<Player>();
+            playersByBet = playersByBet.OrderBy(plr => plr.bagBackup).ToList<Player>();
+            for (int i = 0; i < playersByBet.Count - 1; ++i) {
+                if (playersByBet[i].bagBackup != 0) {
+                    List<Player> sidePotOwners = new List<Player>();
+                    int potVal = playersByBet[i].bagBackup;
+                    int sidePotSum = 0;
+                    for (int j = i; j < playersByBet.Count; ++j) {
+                        sidePotOwners.Add(playersByBet[j]);
+                        sidePotSum += potVal;
+                        playersByBet[j].bagBackup -= potVal;
                     }
+                    sidePots.Add(sidePotOwners, sidePotSum);
+                }
+            }
+            playersByBet.Last().ballance += playersByBet.Last().bagBackup;
+            playersByBet.Last().bagBackup = 0;
+            foreach (Player player in playersByBet) {
+                if (player.bagBackup > 0) {
+                    Console.WriteLine("Ooops :S");
+                }
+            }
+
+            foreach (KeyValuePair<List<Player>, int> sidePot in sidePots) {
+                Console.WriteLine("Players participating of sidepot of value '{0}':", sidePot.Value);
+                foreach (Player player in sidePot.Key) {
+                    Console.WriteLine(player.nickname);
                 }
             }
         }
-        private void collectPhase() {
-            List<Player> winners = new List<Player>();
-            foreach (Player player in players) {
-                if (player.didFold == false)
-                    winners.Add(player);
-            }
-            if (winners.Count() == 1) {
-                if (winners[0].didAllIn) {
-                    foreach (Player player in players) {
-                        if (player != winners[0] && player.bagBackup > winners[0].bagBackup) {
-                            int difference = player.bagBackup - winners[0].bagBackup;
-                            _pot -= difference;
-                            player.ballance += difference;
+        private void showdownPhase() {
+            foreach (KeyValuePair<List<Player>, int> sidePot in sidePots) {
+                foreach (Player x in sidePot.Key) {
+                    foreach (Player y in sidePot.Key) {
+                        if (y != x && !y.didFold && !x.didFold) {
+                            ComparisonResult obracun = x._hand.compareHands(y._hand);
+                            y.didFold = obracun == ComparisonResult.WIN;
+                            x.didFold = obracun == ComparisonResult.LOSE;
                         }
                     }
+
                 }
-                Console.Write("\"" + winners[0].nickname + "\" Has won this round and now has a ballance of: " + winners[0].ballance);
-                winners[0].ballance += _pot;
-                Console.WriteLine("+" + _pot + "=" + winners[0].ballance);
-                _pot = 0;
-            } else {
-                Console.WriteLine("The pot is split in " + winners.Count + " stacks, to: ");
-                foreach (Player winner in winners) {
-                    winner.ballance += winner.bagBackup;
-                    _pot -= winner.bagBackup;
+                int winnerCount = sidePot.Key.Where(plr => !plr.didFold).Count();
+                Console.WriteLine("Winner" + (winnerCount == 1 ? "s" : "") + " of the sidepot of value '{0}' in which participated: ", sidePot.Value);
+                foreach(Player x in sidePot.Key) {
+                    Console.WriteLine(x.nickname);
                 }
-                foreach (Player winner in winners) {
-                    winner.ballance += (_pot / winners.Count);
-                    Console.Write("\"" + winner.nickname + "\" " + winner.ballance);
-                    Console.Write(" + " + winner.bagBackup);
-                    Console.WriteLine(" + " + (_pot / winners.Count) + " = " + winner.ballance);
+                Console.WriteLine((winnerCount == 1 ? "is:" : "are:"));
+                foreach (Player x in sidePot.Key) {
+                    if (!x.didFold) {
+                        Console.WriteLine(x.nickname);
+                        x.ballance += sidePot.Value / winnerCount;
+                    }
+                    x.didFold = false;
                 }
-                _pot %= winners.Count;
             }
+            Console.WriteLine("Balance of each player at the end of round '{0}' is:", _round);
+            foreach(Player x in players) {
+                Console.WriteLine(x.nickname + "\t" + x.ballance);
+            }
+            //foreach (Player x in players) {
+            //    foreach (Player y in players) {
+            //        if (y != x && !y.didFold && !x.didFold) {
+            //            ComparisonResult obracun = x._hand.compareHands(y._hand);
+            //            y.didFold = obracun == ComparisonResult.WIN;
+            //            x.didFold = obracun == ComparisonResult.LOSE;
+            //        }
+            //    }
+            //}
+        }
+        private void collectPhase() {
+
+
+
+
+
+
+            //    List<Player> winners = new List<Player>();
+            //    foreach (Player player in players) {
+            //        if (player.didFold == false)
+            //            winners.Add(player);
+            //    }
+            //    if (winners.Count() == 1) {
+            //        if (winners[0].didAllIn) {
+            //            foreach (Player player in players) {
+            //                if (player != winners[0] && player.bagBackup > winners[0].bagBackup) {
+            //                    int difference = player.bagBackup - winners[0].bagBackup;
+            //                    _pot -= difference;
+            //                    player.ballance += difference;
+            //                }
+            //            }
+            //        }
+            //        Console.Write("\"" + winners[0].nickname + "\" Has won this round and now has a ballance of: " + winners[0].ballance);
+            //        winners[0].ballance += _pot;
+            //        Console.WriteLine("+" + _pot + "=" + winners[0].ballance);
+            //        _pot = 0;
+            //    } else {
+            //        Console.WriteLine("The pot is split in " + winners.Count + " stacks, to: ");
+            //        foreach (Player winner in winners) {
+            //            winner.ballance += winner.bagBackup;
+            //            _pot -= winner.bagBackup;
+            //        }
+            //        foreach (Player winner in winners) {
+            //            winner.ballance += (_pot / winners.Count);
+            //            Console.Write("\"" + winner.nickname + "\" " + winner.ballance);
+            //            Console.Write(" + " + winner.bagBackup);
+            //            Console.WriteLine(" + " + (_pot / winners.Count) + " = " + winner.ballance);
+            //        }
+            //        _pot %= winners.Count;
+            //    }
             var temp = Console.Read();
         }
         private void kickPhase() {
