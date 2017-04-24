@@ -16,10 +16,9 @@ namespace PPoker.PlayerMechanics {
         public bool didFold = false;
         public bool didAllIn = false;
 
-        public Player(string nickname, int ballance, Deck deck) {
+        public Player(string nickname, int ballance) {
             this.nickname = nickname;
             this.ballance = ballance;
-            //this._hand = new Hand(deck);
         }
 
         public void dealCards(Deck deck) {
@@ -37,9 +36,6 @@ namespace PPoker.PlayerMechanics {
                 return ante;
             }
         }
-        public void exchangeCards() {
-
-        }
         public PlayerAction betAction(int currentRaise) {
             System.Console.WriteLine("choose an action: ");
             if (!didAllIn) {
@@ -55,14 +51,18 @@ namespace PPoker.PlayerMechanics {
                 System.Console.WriteLine("F for Fold");
                 string action = System.Console.ReadLine();
                 action = action.ToUpper();
-                if (action == "C")
+                if (action == "C") {
                     return (currentRaise == 0) ? checkAction() : callAction(currentRaise);
-                if (action == "R")
+                }
+                if (action == "R") {
                     return raiseAction(currentRaise);
-                if (action == "A")
+                }
+                if (action == "A") {
                     return allInAction();
-                if (action == "F")
+                }
+                if (action == "F") {
                     return foldAction();
+                }
                 System.Console.WriteLine("Invalid Key");
                 return betAction(currentRaise);
             } else {
@@ -102,9 +102,6 @@ namespace PPoker.PlayerMechanics {
         private PlayerAction foldAction() {
             didFold = true;
             return PlayerAction.FOLD;
-        }
-
-        ///TODO:
-        ///when player 1 goes all in 800$ and player 2 goes all in 300$, if player2 wins, he should not take all money!
+        }        
     }
 }

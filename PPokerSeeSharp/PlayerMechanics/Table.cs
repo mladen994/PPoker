@@ -13,13 +13,13 @@ namespace PPoker.PlayerMechanics {
         public int ante;
         private int _round;
         private int _cycle;
-        private int dealerCounter;
+        private int _dealerCounter;
         private bool _gameStarted;
         private int _pot;
         private int _anteIncrement;
         public string roomName;
         public Deck deck;
-        private Dictionary<List<Player>, int> sidePots;
+        private Dictionary<List<Player>, int> _sidePots;
 
         public Table(Deck deck,
                     string roomName,
@@ -54,7 +54,7 @@ namespace PPoker.PlayerMechanics {
         public void addPlayer(string nickname, int ballance) {
             if (!_gameStarted) {
                 if (players.Count < maxPlayers) {
-                    Player player = new Player(nickname, ballance, deck);
+                    Player player = new Player(nickname, ballance);
                     players.Add(player);
                 } else {
                     throw new ArgumentException("Room full!");
@@ -88,8 +88,8 @@ namespace PPoker.PlayerMechanics {
         private void resetRoundPhase() {
             ++_round;
             _pot = 0;
-            dealerCounter = ++dealerCounter % players.Count;
-            if (dealerCounter == 0) {
+            _dealerCounter = ++_dealerCounter % players.Count;
+            if (_dealerCounter == 0) {
                 ++_cycle;
                 ante += _anteIncrement;
             }
@@ -101,23 +101,16 @@ namespace PPoker.PlayerMechanics {
                 player.bagBackup = 0;
             }
         }
-        //test
         private void drawPhase() {
             for (int i = 0; i < players.Count; ++i) {
-                int curIndex = (dealerCounter + i) % players.Count;
+                int curIndex = (_dealerCounter + i) % players.Count;
                 players[curIndex].dealCards(deck);
                 _pot += players[curIndex].placeAnte(ante);
             }
-            //tableState();
-            //deck.printDeck();
-
-            //System.Console.WriteLine("Press enter to close...");
-            //System.Console.ReadLine();
-            //Debug section
         }
         private bool firstBetPhase() {
             int currentRaise = 0;
-            int playerIndex = dealerCounter;
+            int playerIndex = _dealerCounter;
             int playersFolded = 0;
             int counter = players.Count() - playersFolded;
             while (counter > 0) {
@@ -150,7 +143,7 @@ namespace PPoker.PlayerMechanics {
         }
         private void exchangePhase() {
             for (int i = 0; i < players.Count; ++i) {
-                int j = (i + dealerCounter) % players.Count;
+                int j = (i + _dealerCounter) % players.Count;
 
                 players[j]._hand.printHand();
                 Console.WriteLine(players[j].nickname + ", do you wish to exchange a card? Y/N");
@@ -169,11 +162,12 @@ namespace PPoker.PlayerMechanics {
         }
         private bool secondBetPhase() {
             int currentRaise = 0;
-            int playerIndex = dealerCounter;
+            int playerIndex = _dealerCounter;
             int playersFolded = 0;
             foreach (Player player in players) {
-                if (player.didFold)
+                if (player.didFold) {
                     ++playersFolded;
+                }
             }
             int counter = players.Count() - playersFolded;
             while (counter > 0) {
@@ -190,11 +184,12 @@ namespace PPoker.PlayerMechanics {
                         currentRaise = players[playerIndex].bag;
                         counter = players.Count - playersFolded;
                     }
-                    if (action == PlayerAction.FOLD)
+                    if (action == PlayerAction.FOLD) {
                         if (++playersFolded == players.Count() - 1) {
                             dumpBagsToPot();
                             return false;
                         }
+                    }
                     --counter;
                 }
                 playerIndex = ++playerIndex % players.Count;
@@ -203,7 +198,7 @@ namespace PPoker.PlayerMechanics {
             return true;
         }
         private void preShowdownPhase() {
-            sidePots = new Dictionary<List<Player>, int>();
+            _sidePots = new Dictionary<List<Player>, int>();
             var playersByBet = new List<Player>();
             playersByBet = players.Where(plr => !plr.didFold).ToList<Player>();
             playersByBet = playersByBet.OrderBy(plr => plr.bagBackup).ToList<Player>();
@@ -217,7 +212,7 @@ namespace PPoker.PlayerMechanics {
                         sidePotSum += potVal;
                         playersByBet[j].bagBackup -= potVal;
                     }
-                    sidePots.Add(sidePotOwners, sidePotSum);
+                    _sidePots.Add(sidePotOwners, sidePotSum);
                 }
             }
             playersByBet.Last().ballance += playersByBet.Last().bagBackup;
@@ -228,7 +223,7 @@ namespace PPoker.PlayerMechanics {
                 }
             }
 
-            foreach (KeyValuePair<List<Player>, int> sidePot in sidePots) {
+            foreach (KeyValuePair<List<Player>, int> sidePot in _sidePots) {
                 Console.WriteLine("Players participating of sidepot of value '{0}':", sidePot.Value);
                 foreach (Player player in sidePot.Key) {
                     Console.WriteLine(player.nickname);
@@ -236,7 +231,7 @@ namespace PPoker.PlayerMechanics {
             }
         }
         private void showdownPhase() {
-            foreach (KeyValuePair<List<Player>, int> sidePot in sidePots) {
+            foreach (KeyValuePair<List<Player>, int> sidePot in _sidePots) {
                 foreach (Player x in sidePot.Key) {
                     foreach (Player y in sidePot.Key) {
                         if (y != x && !y.didFold && !x.didFold) {
@@ -249,7 +244,7 @@ namespace PPoker.PlayerMechanics {
                 }
                 int winnerCount = sidePot.Key.Where(plr => !plr.didFold).Count();
                 Console.WriteLine("Winner" + (winnerCount == 1 ? "s" : "") + " of the sidepot of value '{0}' in which participated: ", sidePot.Value);
-                foreach(Player x in sidePot.Key) {
+                foreach (Player x in sidePot.Key) {
                     Console.WriteLine(x.nickname);
                 }
                 Console.WriteLine((winnerCount == 1 ? "is:" : "are:"));
@@ -262,60 +257,9 @@ namespace PPoker.PlayerMechanics {
                 }
             }
             Console.WriteLine("Balance of each player at the end of round '{0}' is:", _round);
-            foreach(Player x in players) {
+            foreach (Player x in players) {
                 Console.WriteLine(x.nickname + "\t" + x.ballance);
             }
-            //foreach (Player x in players) {
-            //    foreach (Player y in players) {
-            //        if (y != x && !y.didFold && !x.didFold) {
-            //            ComparisonResult obracun = x._hand.compareHands(y._hand);
-            //            y.didFold = obracun == ComparisonResult.WIN;
-            //            x.didFold = obracun == ComparisonResult.LOSE;
-            //        }
-            //    }
-            //}
-        }
-        private void collectPhase() {
-
-
-
-
-
-
-            //    List<Player> winners = new List<Player>();
-            //    foreach (Player player in players) {
-            //        if (player.didFold == false)
-            //            winners.Add(player);
-            //    }
-            //    if (winners.Count() == 1) {
-            //        if (winners[0].didAllIn) {
-            //            foreach (Player player in players) {
-            //                if (player != winners[0] && player.bagBackup > winners[0].bagBackup) {
-            //                    int difference = player.bagBackup - winners[0].bagBackup;
-            //                    _pot -= difference;
-            //                    player.ballance += difference;
-            //                }
-            //            }
-            //        }
-            //        Console.Write("\"" + winners[0].nickname + "\" Has won this round and now has a ballance of: " + winners[0].ballance);
-            //        winners[0].ballance += _pot;
-            //        Console.WriteLine("+" + _pot + "=" + winners[0].ballance);
-            //        _pot = 0;
-            //    } else {
-            //        Console.WriteLine("The pot is split in " + winners.Count + " stacks, to: ");
-            //        foreach (Player winner in winners) {
-            //            winner.ballance += winner.bagBackup;
-            //            _pot -= winner.bagBackup;
-            //        }
-            //        foreach (Player winner in winners) {
-            //            winner.ballance += (_pot / winners.Count);
-            //            Console.Write("\"" + winner.nickname + "\" " + winner.ballance);
-            //            Console.Write(" + " + winner.bagBackup);
-            //            Console.WriteLine(" + " + (_pot / winners.Count) + " = " + winner.ballance);
-            //        }
-            //        _pot %= winners.Count;
-            //    }
-            var temp = Console.Read();
         }
         private void kickPhase() {
             players.RemoveAll(x => x.ballance == 0);
@@ -328,11 +272,12 @@ namespace PPoker.PlayerMechanics {
             System.Console.WriteLine("Pot ballance: " + _pot + " čuna.");
             System.Console.WriteLine();
             for (int i = 0; i < players.Count; i++) {
-                System.Console.WriteLine("Player " + i + " aka \"" + players[i].nickname + "\"" + ((i == dealerCounter) ? " is dealer:" : ":"));
+                System.Console.WriteLine("Player " + i + " aka \"" + players[i].nickname + "\"" + ((i == _dealerCounter) ? " is dealer:" : ":"));
                 System.Console.WriteLine("\tCurrent ballance: " + players[i].ballance);
                 System.Console.WriteLine("\tCurrent bag ballance: " + players[i].bag);
-                if (players[i]._hand != null)
+                if (players[i]._hand != null) {
                     players[i]._hand.printHand();
+                }
                 System.Console.WriteLine("=================================================");
             }
             System.Console.WriteLine("**********************************************");

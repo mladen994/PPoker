@@ -54,8 +54,9 @@ namespace PPoker.CardMechanics {
             System.Console.WriteLine("\t------------------------------");
         }
         private void swapCards(int x, int y) {
-            if (x == y)
+            if (x == y) {
                 return;
+            }
             Card temp = _cards[x];
             _cards[x] = _cards[y];
             _cards[y] = temp;
@@ -63,8 +64,9 @@ namespace PPoker.CardMechanics {
         private string findPair() {
             sortHand();
             for (int i = 0; i < 4; ++i) {
-                if (_cards[i].isSameValueAs(_cards[i + 1]))
+                if (_cards[i].isSameValueAs(_cards[i + 1])) {
                     return _cards[i].getValue();
+                }
             }
             throw new ArgumentException("HOW?!?!?", "This line should have never been executed! :S");
         }
@@ -111,8 +113,9 @@ namespace PPoker.CardMechanics {
             int temp = 0;
             for (int i = 0; i < _cards.Count() - 1; ++i) {
                 for (int j = i + 1; j < _cards.Count(); ++j) {
-                    if (_cards[i].isSameValueAs(_cards[j]))
+                    if (_cards[i].isSameValueAs(_cards[j])) {
                         ++temp;
+                    }
                 }
             }
             switch (temp) {
@@ -140,8 +143,9 @@ namespace PPoker.CardMechanics {
                 bool isFlush = _cards[0].isSameSuiteAs(_cards[1]) && _cards[1].isSameSuiteAs(_cards[2]) && _cards[2].isSameSuiteAs(_cards[3]) && _cards[3].isSameSuiteAs(_cards[4]);
                 if (isStraight && isFlush) {
                     _Power = 9;
-                    if ("Ace".Equals(_cards[0].getValue()))
+                    if ("Ace".Equals(_cards[0].getValue())) {
                         ++_Power;
+                    }
                 } else if (isStraight) {
                     _Power = 5;
                 } else if (isFlush) {
@@ -152,8 +156,9 @@ namespace PPoker.CardMechanics {
         private void sortHand() {
             for (int i = 0; i < 4; ++i) {
                 for (int j = i + 1; j < 5; ++j) {
-                    if (_cards[i] < _cards[j])
+                    if (_cards[i] < _cards[j]) {
                         swapCards(i, j);
+                    }
                 }
             }
             sortByRelevance();
@@ -210,14 +215,16 @@ namespace PPoker.CardMechanics {
                     }
                     break;
                 case 8:
-                    if (!_cards[0].isSameValueAs(_cards[1]))
+                    if (!_cards[0].isSameValueAs(_cards[1])) {
                         swapCards(0, 4);
+                    }
                     break;
                 case 5:
                 case 9:
                     string substr = _cards[0].getValue() + _cards[1].getValue() + _cards[2].getValue() + _cards[3].getValue() + _cards[4].getValue();
-                    if ("Ace5432".Equals(substr))
+                    if ("Ace5432".Equals(substr)) {
                         swapCards(0, 4);
+                    }
                     break;
                 default:
                     break;
@@ -236,10 +243,11 @@ namespace PPoker.CardMechanics {
                     return ComparisonResult.LOSE;
                 } else {
                     for (int i = 0; i < 5; ++i) {
-                        if (_cards[i].getValueAsInt() > other._cards[i].getValueAsInt())
+                        if (_cards[i].getValueAsInt() > other._cards[i].getValueAsInt()) {
                             return ComparisonResult.WIN;
-                        else if (_cards[i].getValueAsInt() < other._cards[i].getValueAsInt())
+                        } else if (_cards[i].getValueAsInt() < other._cards[i].getValueAsInt()) {
                             return ComparisonResult.LOSE;
+                        }
                     }
                 }
             }

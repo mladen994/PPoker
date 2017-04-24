@@ -52,12 +52,10 @@ namespace PPoker.CardMechanics {
             return returner;
         }
         public void addCards(List<Card> toBeAdded) {
-            foreach (Card x in toBeAdded) {
-                _cards.Add(x);
-            }
+            _cards.AddRange(toBeAdded);
         }
         public void returnCardsToDeck(List<Card> newCards) {
-            _cards.AddRange(newCards);
+            addCards(newCards);
         }
         public void returnCardToDeck(Card newCard) {
             _cards.Add(newCard);

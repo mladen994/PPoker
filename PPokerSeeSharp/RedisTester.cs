@@ -11,7 +11,7 @@ namespace PPoker {
         readonly RedisClient redis = new RedisClient(Config.SingleHost);
 
         RedisTester() {
-            //redis. asdfasdasda
+
         }
     }
 }
